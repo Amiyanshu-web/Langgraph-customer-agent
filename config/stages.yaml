@@ -1,0 +1,105 @@
+input_schema:
+  customer_name: string
+  email: string
+  query: string
+  priority: string
+  ticket_id: string
+  order_id: string
+
+stages:
+  - name: INTAKE
+    mode: deterministic
+    abilities:
+      - name: accept_payload
+        server: COMMON
+    prompt: "Execute abilities in sequence to accept and initialize the payload."
+
+  - name: UNDERSTAND
+    mode: deterministic
+    abilities:
+      - name: parse_request_text
+        server: COMMON
+      - name: extract_entities
+        server: ATLAS
+    prompt: "Parse request and extract entities."
+
+  - name: PREPARE
+    mode: deterministic
+    abilities:
+      - name: normalize_fields
+        server: COMMON
+      - name: enrich_records
+        server: ATLAS
+      - name: add_flags_calculations
+        server: COMMON
+    prompt: "Normalize, enrich, and compute flags."
+
+  - name: ASK
+    mode: deterministic
+    abilities:
+      - name: clarify_question
+        server: ATLAS
+    prompt: "Ask clarifying questions if critical fields are missing."
+
+  - name: WAIT
+    mode: deterministic
+    abilities:
+      - name: extract_answer
+        server: ATLAS
+      - name: store_answer
+        server: COMMON
+    prompt: "Capture and store the answer from user."
+
+  - name: RETRIEVE
+    mode: deterministic
+    abilities:
+      - name: knowledge_base_search
+        server: ATLAS
+      - name: store_data
+        server: COMMON
+    prompt: "Search KB and attach useful results."
+
+  - name: DECIDE
+    mode: non_deterministic
+    abilities:
+      - name: solution_evaluation
+        server: COMMON
+      - name: escalation_decision
+        server: ATLAS
+      - name: update_payload
+        server: COMMON
+    prompt: "Score solutions and escalate if score below threshold."
+
+  - name: UPDATE
+    mode: deterministic
+    abilities:
+      - name: update_ticket
+        server: ATLAS
+      - name: close_ticket
+        server: ATLAS
+    prompt: "Update ticket status and close if resolved."
+
+  - name: CREATE
+    mode: deterministic
+    abilities:
+      - name: response_generation
+        server: COMMON
+    prompt: "Draft a clear customer response."
+
+  - name: DO
+    mode: deterministic
+    abilities:
+      - name: execute_api_calls
+        server: ATLAS
+      - name: trigger_notifications
+        server: ATLAS
+    prompt: "Execute necessary external actions and notify customer."
+
+  - name: COMPLETE
+    mode: deterministic
+    abilities:
+      - name: output_payload
+        server: COMMON
+    prompt: "Output final structured payload."
+
+decide_threshold: 90
